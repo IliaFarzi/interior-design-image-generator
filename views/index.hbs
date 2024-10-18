@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>انتخاب مبلمان</title>
+    <style>
+        body {
+            font-family: 'Tahoma', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        select, input {
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #items {
+            border: 1px solid #ccc;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .item {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        #result {
+            margin-top: 1rem;
+            color: red;
+            text-align: center;
+        }
+        #imageContainer {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        #imageContainer img {
+            max-width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .spinner-border {
+            display: inline-block;
+            width: 3rem;
+            height: 3rem;
+            vertical-align: text-bottom;
+            border: .25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+        }
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>انتخاب مبلمان</h1>
+    <form id="furnitureForm" method="POST" action="/generate-image">
+        <label for="location">مکان:</label>
+        <select id="location" required></select>
+
+        <label for="style">سبک:</label>
+        <select id="style" required></select>
+
+        <div id="items"></div>
+
+        <button type="button" id="addItem">افزودن آیتم</button>
+        <button type="submit">ثبت و ارسال</button>
+    </form>
+
+    <div id="result"></div>
+    <div id="imageContainer"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const PersianInteriorDesignLocation = {
+            BED_ROOM : 'اتاق خواب',
+            LIVING_ROOM : 'اتاق نشیمن',
+            DINING_ROOM : 'اتاق غذاخوری',
+            KITCHEN : 'آشپزخانه',
+            BATHROOM : 'حمام',
+            HOME_OFFICE : 'دفتر کار خانگی',
+            MASTER_SUITE : 'سوئیت اصلی',
+            GUEST_ROOM : 'اتاق مهمان',
+            KIDS_ROOM : 'اتاق کودک',
+            NURSERY : 'اتاق نوزاد',
+            PLAYROOM : 'اتاق بازی',
+            STUDY : 'اتاق مطالعه',
+            LIBRARY : 'کتابخانه',
+            GAME_ROOM : 'اتاق بازی',
+            HOME_THEATER : 'سینمای خانگی',
+            SUN_ROOM : 'اتاق آفتابگیر',
+            CONSERVATORY : 'گلخانه',
+            ATTIC : 'زیر شیروانی',
+            BASEMENT : 'زیرزمین',
+            LAUNDRY_ROOM : 'اتاق لباسشویی',
+            MUD_ROOM : 'اتاق ورودی',
+            PANTRY : 'انباری آشپزخانه',
+            WALK_IN_CLOSET : 'کمد اتاق',
+            DRESSING_ROOM : 'اتاق لباس',
+            FOYER : 'سرسرا',
+            ENTRYWAY : 'ورودی',
+            HALLWAY : 'راهرو',
+            STAIRCASE : 'راه پله',
+            LANDING : 'پاگرد',
+            LOFT : 'بالکن داخلی',
+            MEZZANINE : 'نیم طبقه',
+            BALCONY : 'بالکن',
+            PATIO : 'حیاط خلوت',
+            DECK : 'تراس چوبی',
+            PORCH : 'ایوان',
+            GARAGE : 'گاراژ',
+            WORKSHOP : 'کارگاه',
+            HOME_GYM : 'باشگاه خانگی',
+            WINE_CELLAR : 'انبار شراب',
+            UTILITY_ROOM : 'اتاق تأسیسات',
+            POWDER_ROOM : 'سرویس بهداشتی مهمان',
+            STUDIO_APARTMENT : 'آپارتمان استودیویی',
+            OPEN_PLAN_LIVING : 'فضای زندگی باز',
+            BREAKFAST_NOOK : 'گوشه صبحانه خوری',
+            READING_CORNER : 'گوشه مطالعه',
+            HOME_BAR : 'بار خانگی',
+            CRAFT_ROOM : 'اتاق کاردستی',
+            MEDITATION_ROOM : 'اتاق مدیتیشن',
+            MUSIC_ROOM : 'اتاق موسیقی',
+            GREENHOUSE : 'گلخانه'
+        };
+
+        const PersianStyle = {
+            CLASSIC_PERSIAN : "کلاسیک ایرانی",
+            GREEK_MINIMAL : "مینیمال یونانی",
+            MODERN_SCANDINAVIAN : "مدرن اسکاندیناوی",
+            INDUSTRIAL_LOFT : "لافت صنعتی",
+            FRENCH_COUNTRY : "روستایی فرانسوی",
+            JAPANESE_ZEN : "ذن ژاپنی",
+            ART_DECO : "آرت دکو",
+            BOHEMIAN : "بوهمیایی",
+            MID_CENTURY_MODERN : "مدرن اواسط قرن",
+            CONTEMPORARY_MINIMALIST : "مینیمالیست معاصر"
+        }
+
+        const PersianFurnitureItem = {
+            CHAIR : "صندلی",
+            SOFA : "مبل",
+            DESK : "میز تحریر",
+            DINING_TABLE : "میز ناهارخوری",
+            COFFEE_TABLE : "میز جلو مبلی",
+            BED : "تخت",
+            WARDROBE : "کمد لباس",
+            DRESSER : "دراور",
+            NIGHTSTAND : "پاتختی",
+            BOOKSHELF : "قفسه کتاب",
+            ARMCHAIR : "صندلی راحتی",
+            OTTOMAN : "پاف",
+            STOOL : "چهارپایه",
+            BENCH : "نیمکت",
+            CABINET : "کابینت",
+            SIDEBOARD : "بوفه",
+            FIREPLACE : "شومینه",
+            LAMP : "چراغ",
+            CHANDELIER : "لوستر",
+            MIRROR : "آینه",
+            RUG : "قالیچه",
+            CURTAINS : "پرده",
+            CLOCK : "ساعت",
+            VASE : "گلدان",
+            PILLOW : "بالش",
+            BLANKET : "پتو",
+            TELEVISION : "تلویزیون",
+            STEREO : "استریو",
+            REFRIGERATOR : "یخچال",
+            OVEN : "فر",
+            MICROWAVE : "مایکروویو",
+            DISHWASHER : "ماشین ظرفشویی",
+            WASHING_MACHINE : "ماشین لباسشویی",
+            DRYER : "خشک کن",
+            AIR_CONDITIONER : "کولر",
+            HEATER : "بخاری",
+            FAN : "پنکه",
+            VACUUM : "جاروبرقی",
+            IRONING_BOARD : "میز اتو",
+            PLANT_POT : "گلدان",
+            SHELVES : "قفسه",
+            COAT_RACK : "رخت آویز",
+            UMBRELLA : "چتر",
+            PAINTING : "تابلو",
+            SCULPTURE : "مجسمه",
+            CARPET : "فرش",
+            MATTRESS : "تشک",
+            CRIB : "تخت نوزاد",
+            HIGH_CHAIR : "صندلی غذای کودک",
+            RECLINER : "صندلی تاشو"
+        }
+
+        const PersianColor =  {
+            RED : "قرمز",
+            CRIMSON : "زرشکی",
+            NAVY : "سرمه‌ای",
+            TEAL : "فیروزه‌ای",
+            EMERALD : "زمردی",
+            OLIVE : "زیتونی",
+            GOLD : "طلایی",
+            SILVER : "نقره‌ای",
+            CHARCOAL : "ذغالی",
+            IVORY : "عاجی"
+        }
+
+        const PersianMaterial = {
+            WOOD : "چوب",
+            METAL : "فلز",
+            PLASTIC : "پلاستیک",
+            GLASS : "شیشه",
+            LEATHER : "چرم",
+            FABRIC : "پارچه",
+            MARBLE : "مرمر",
+            STONE : "سنگ",
+            CERAMIC : "سرامیک",
+            PAPER : "کاغذ"
+        };
+
+        const locationSelect = document.getElementById('location');
+        const styleSelect = document.getElementById('style');
+        const itemsContainer = document.getElementById('items');
+        const addItemButton = document.getElementById('addItem');
+
+        Object.keys(PersianInteriorDesignLocation).forEach(function(key) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.text = PersianInteriorDesignLocation[key];
+            locationSelect.appendChild(option);
+        });
+
+        Object.keys(PersianStyle).forEach(function(key) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.text = PersianStyle[key];
+            styleSelect.appendChild(option);
+        });
+
+        function createItemRow() {
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('item');
+
+            const itemSelect = document.createElement('select');
+            itemSelect.name = 'item';
+            Object.keys(PersianFurnitureItem).forEach(function(key) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.text = PersianFurnitureItem[key];
+                itemSelect.appendChild(option);
+            });
+
+            const colorSelect = document.createElement('select');
+            colorSelect.name = 'color';
+            Object.keys(PersianColor).forEach(function(key) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.text = PersianColor[key];
+                colorSelect.appendChild(option);
+            });
+
+            const materialSelect = document.createElement('select');
+            materialSelect.name = 'material';
+            Object.keys(PersianMaterial).forEach(function(key) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.text = PersianMaterial[key];
+                materialSelect.appendChild(option);
+            });
+
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.textContent = 'حذف';
+            removeButton.addEventListener('click', function() {
+                itemDiv.remove();
+            });
+
+            itemDiv.appendChild(itemSelect);
+            itemDiv.appendChild(colorSelect);
+            itemDiv.appendChild(materialSelect);
+            itemDiv.appendChild(removeButton);
+            itemsContainer.appendChild(itemDiv);
+        }
+
+        addItemButton.addEventListener('click', function() {
+            createItemRow();
+        });
+
+        function showLoadingSpinner() {
+            const spinnerHtml = '<div class="spinner-border text-primary" style="color: #4CAF50" role="status"></div>';
+            document.getElementById('imageContainer').innerHTML = spinnerHtml;
+        }
+
+        async function generateImage(formData) {
+            try {
+                const response = await fetch('/generate-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate image');
+                }
+
+                const result = await response.json();
+                if (result.imageGenerated) {
+                    document.getElementById('imageContainer').innerHTML = `<img src="${result.imageUrl}" alt="Generated Room Design" />`;
+                } else {
+                    throw new Error(result.error || 'Failed to generate image');
+                }
+            } catch (error) {
+                document.getElementById('result').textContent = error.message;
+            }
+        }
+
+        document.getElementById('furnitureForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                style: document.getElementById('style').value,
+                location: document.getElementById('location').value,
+                items: Array.from(document.querySelectorAll('.item')).map(item => ({
+                    name: item.querySelector('select[name="item"]').value,
+                    color: item.querySelector('select[name="color"]').value,
+                    material: item.querySelector('select[name="material"]').value
+                }))
+            };
+
+            // Check if items array is empty
+            if (formData.items.length === 0) {
+                document.getElementById('result').textContent = 'لطفا حداقل یک آیتم را اضافه کنید.';
+                return;
+            }
+
+            // Show loading spinner
+            showLoadingSpinner();
+
+            // Generate image
+            await generateImage(formData);
+        });
+        createItemRow()
+    });
+</script>
+</body>
+</html>

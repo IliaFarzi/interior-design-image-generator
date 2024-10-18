@@ -1,0 +1,3 @@
+FLUX_API_KEY=key
+DOMAIN=http://localhost:3000
+PORT=3000
